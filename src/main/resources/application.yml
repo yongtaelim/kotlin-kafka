@@ -1,8 +1,8 @@
 spring:
   kafka:
     producer:
-      bootstrap-servers: 127.0.0.1:9095
+      bootstrap-servers: 127.0.0.1:9097
     consumer:
-      bootstrap-servers: 127.0.0.1:9095
+      bootstrap-servers: 127.0.0.1:9097
 
-    type: replying
+    type: default

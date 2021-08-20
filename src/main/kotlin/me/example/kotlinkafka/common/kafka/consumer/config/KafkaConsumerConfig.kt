@@ -2,6 +2,7 @@ package me.example.kotlinkafka.common.kafka.consumer.config
 
 import me.example.kotlinkafka.member.domain.dto.Member
 import org.apache.kafka.clients.consumer.ConsumerConfig
+import org.apache.kafka.clients.consumer.RoundRobinAssignor
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -34,7 +35,7 @@ class KafkaConsumerConfig(
     private fun kafkaListenerContainerFactory(): ConcurrentKafkaListenerContainerFactory<String, String> {
         val factory = ConcurrentKafkaListenerContainerFactory<String, String>()
 
-        factory.setConcurrency(5) // Consumer Process Thread Count
+        factory.setConcurrency(6) // Consumer Process Thread Count
         factory.consumerFactory = getConfig()
         factory.containerProperties.pollTimeout = 500
         factory.containerProperties.ackMode = ContainerProperties.AckMode.MANUAL
@@ -49,6 +50,7 @@ class KafkaConsumerConfig(
 //        config[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
         config[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest"  // 마지막 읽은 부분부터 Read
         config[ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG] = false
+        config[ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG] = listOf(RoundRobinAssignor::class.java)  // 적용
         config[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
         config[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
 
