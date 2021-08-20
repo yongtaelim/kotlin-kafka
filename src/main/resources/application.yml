@@ -1,0 +1,8 @@
+spring:
+  kafka:
+    producer:
+      bootstrap-servers: 127.0.0.1:9095
+    consumer:
+      bootstrap-servers: 127.0.0.1:9095
+
+    type: replying
