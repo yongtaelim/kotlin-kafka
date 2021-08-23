@@ -9,10 +9,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.annotation.EnableKafka
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory
-import org.springframework.kafka.listener.AcknowledgingMessageListener
-import org.springframework.kafka.listener.ContainerProperties
-import org.springframework.kafka.listener.KafkaMessageListenerContainer
-import org.springframework.kafka.listener.MessageListener
+import org.springframework.kafka.listener.*
 import org.springframework.kafka.support.Acknowledgment
 import org.springframework.kafka.support.LogIfLevelEnabled
 
@@ -33,8 +30,9 @@ class KafkaSingleConsumerConfig {
 
     @Bean
     fun kafkaMessageListenerContainer(): KafkaMessageListenerContainer<String, String> {
-        val props = ContainerProperties("save_member")
-        props.messageListener = getMessageListener()
+        val props = ContainerProperties("save_single_member")
+//        props.messageListener = getMessageListener()
+        props.messageListener = getBatchMessageListener()
         props.commitLogLevel = LogIfLevelEnabled.Level.DEBUG
         props.setGroupId("test11")
 
@@ -44,16 +42,49 @@ class KafkaSingleConsumerConfig {
 
     private fun getMessageListener(): MessageListener<String, String> {
         val messageListener =
-//            MessageListener<String, String>() {
-//                log.info("Consumer Recode. Value=${it.value()} Offset=${it.offset()}")
-//            }
+            MessageListener<String, String>() { data ->
+                log.info("Consumer Recode. Value=${data.value()} Offset=${data.offset()}")
+            }
 
             AcknowledgingMessageListener<String, String> { data, acknowledgment ->
                 log.info("Consumer Recode. Value=${data.value()} Offset=${data.offset()}")
                 Thread.sleep(2000)
                 acknowledgment?.acknowledge()
             }
+
+            ConsumerAwareMessageListener<String, String> { data, consumer ->
+                log.info("Consumer Recode. Value=${data.value()} Offset=${data.offset()} ")
+            }
+
+            AcknowledgingConsumerAwareMessageListener<String, String> {data, acknowledgment, consumer ->
+                log.info("Consumer Recode. Value=${data.value()} Offset=${data.offset()} ")
+            }
+
         return messageListener
+    }
+
+    private fun getBatchMessageListener() : BatchMessageListener<String, String> {
+        val batchMessageListener =
+            BatchMessageListener<String, String> {data ->
+                data.forEach { data ->
+                    log.info("Consumer Recode. Value=${data.value()} Offset=${data.offset()} ")
+                }
+                Thread.sleep(3000)
+            }
+
+            BatchAcknowledgingMessageListener<String, String> {data, acknowledgment ->
+
+            }
+
+            BatchConsumerAwareMessageListener<String, String> {data, consumer ->
+
+            }
+
+            BatchAcknowledgingConsumerAwareMessageListener<String, String> {data, acknowledgment, consumer ->
+
+            }
+
+        return batchMessageListener
     }
 
     private fun getConfig(): Map<String, Any> =

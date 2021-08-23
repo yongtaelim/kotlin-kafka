@@ -22,8 +22,9 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean
 @EnableKafka
 @Configuration
 class KafkaConsumerConfig(
-    private val validator: LocalValidatorFactoryBean
-): KafkaListenerConfigurer {
+//    private val validator: LocalValidatorFactoryBean
+) {
+//    : KafkaListenerConfigurer {
 
     @Value("\${spring.kafka.consumer.bootstrap-servers}")
     private lateinit var BOOTSTRAP_SERVER: String
@@ -36,28 +37,23 @@ class KafkaConsumerConfig(
         val factory = ConcurrentKafkaListenerContainerFactory<String, String>()
 
         factory.setConcurrency(6) // Consumer Process Thread Count
-        factory.consumerFactory = getConfig()
+        factory.consumerFactory = DefaultKafkaConsumerFactory(getConfig())
         factory.containerProperties.pollTimeout = 500
         factory.containerProperties.ackMode = ContainerProperties.AckMode.MANUAL
 
         return factory
     }
 
-    private fun getConfig(): ConsumerFactory<String, String> {
-        val config = mutableMapOf<String, Any>()
+    private fun getConfig(): Map<String, Any> =
+        mapOf(
+            ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to BOOTSTRAP_SERVER,
+            ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "latest",    // 마지막 읽은 부분부터 Read
+            ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG to false,
+            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
+            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class
+        )
 
-        config[ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG] = BOOTSTRAP_SERVER
-//        config[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
-        config[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest"  // 마지막 읽은 부분부터 Read
-        config[ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG] = false
-        config[ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG] = listOf(RoundRobinAssignor::class.java)  // 적용
-        config[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
-        config[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
-
-        return DefaultKafkaConsumerFactory(config)
-    }
-
-    override fun configureKafkaListeners(registrar: KafkaListenerEndpointRegistrar?) {
-        registrar?.setValidator(validator)
-    }
+//    override fun configureKafkaListeners(registrar: KafkaListenerEndpointRegistrar?) {
+//        registrar?.setValidator(validator)
+//    }
 }

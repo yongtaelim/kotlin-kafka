@@ -20,7 +20,7 @@ class MemberConsumer: AcknowledgingMessageListener<String, String> {
     override fun onMessage(data: ConsumerRecord<String, String>, acknowledgment: Acknowledgment?) {
         try {
             log.info("Save Consumer Message:: [ $data ] value:: [ ${data.value()} ]")
-            Thread.sleep(50000)
+//            Thread.sleep(50000)
             // ack 처리
             acknowledgment?.acknowledge()
         } catch (e: Exception) {
