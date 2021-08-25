@@ -21,8 +21,11 @@ abstract class KafkaProducer {
     //        object: ListenableFutureCallback<SendResult<String, String>> {  // 2.5 이전
         object: KafkaSendCallback<String, String> {  // 2.5 이후
             override fun onSuccess(result: SendResult<String, String>?) {
-                log.info(
-                    "Send Message = [ $message ] with offset=[ ${result!!.recordMetadata.offset()} ]"
+                println(
+                    """
+                        Send Message = [ $message ] 
+                          - Offset = [ ${result!!.recordMetadata.offset()} ], Topic = [ ${result.recordMetadata.topic()} ], Partition = [ ${result.recordMetadata.partition()} ]
+                    """.trimIndent()
                 )
             }
 
@@ -35,7 +38,7 @@ abstract class KafkaProducer {
 
             // 2.5 이후
             override fun onFailure(ex: KafkaProducerException) {
-                log.error(
+                println(
                     "Message 전달 오류 [ $message ] due to: ${ex.getFailedProducerRecord<String, String>()}"
                 )
             }
