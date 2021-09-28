@@ -12,7 +12,8 @@ import java.util.concurrent.TimeoutException
  */
 @Component
 class MemberProducer(
-    val kafkaTemplate: KafkaTemplate<String, String>
+    val kafkaTemplate: KafkaTemplate<String, String>,
+    val kafkaTemplate1: KafkaTemplate<String, Int>
 ): KafkaProducer() {
     companion object {
         const val TOPIC_NAME = "insert_member"
@@ -28,6 +29,16 @@ class MemberProducer(
 
         // kafka add callback
         listenableFuture.addCallback(listenableFutureCallback(message))
+    }
+
+    fun sendMessageString(message: String) {
+        // kafka producer
+        kafkaTemplate.send(TOPIC_NAME, message)
+    }
+
+    fun sendMessageInt(message: Int) {
+        // kafka producer
+        kafkaTemplate1.send(TOPIC_NAME, message)
     }
 
     /**

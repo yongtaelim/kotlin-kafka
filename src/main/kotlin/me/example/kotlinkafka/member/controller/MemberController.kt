@@ -18,7 +18,7 @@ class MemberController(
     @PostMapping("/async")
     fun saveMemberAsync(
         @RequestBody member: Member
-    ) = producer.sendMessage(member.name)
+    ) = producer.sendMessage(member.name!!)
 
     @PatchMapping("/start")
     fun consumerStart() {
@@ -53,8 +53,18 @@ class MemberController(
     }
 
 
-        @PostMapping("sync")
+    @PostMapping("sync")
     fun saveMemberSync(
         @RequestBody member: Member
-    ) = producer.sendMessage(member.name)
+    ) = producer.sendMessage(member.name!!)
+
+    @PostMapping("/string")
+    fun saveMemberString(
+        @RequestBody member: Member
+    ) = producer.sendMessageString(member.name!!)
+
+    @PostMapping("/int")
+    fun saveMemberInt(
+        @RequestBody member: Member
+    ) = producer.sendMessageInt(member.age!!)
 }

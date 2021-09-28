@@ -114,11 +114,11 @@ class MemberTestConsumer {
 //            println("batch6 data:: ${it.value()} topic=${it.topic()} partition=${it.partition()} offset=${it.offset()}")
 //        }
 //    }
-
-    @KafkaListener(id = "listener1", topics = ["insert_member"], groupId = "group1", autoStartup = "false")
-    fun listener1(data: String) {
-        println("listener1 data:: $data")
-    }
+//
+//    @KafkaListener(id = "listener1", topics = ["insert_member"], groupId = "group1", autoStartup = "false")
+//    fun listener1(data: String) {
+//        println("listener1 data:: $data")
+//    }
 //
 //    @KafkaListener(id = "listener2", topics = ["insert_member"], groupId = "group1")
 //    fun listener2(data: String) {
