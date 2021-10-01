@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component
 /**
  * Created by LYT to 2021/09/24
  */
-@Component
-@KafkaListener(id = "yongKafkaHandler", topics = ["insert_member"])
+//@Component
+//@KafkaListener(id = "yongKafkaHandler", topics = ["insert_member"])
 class MemberHandlerConsumer {
 
 //    @KafkaHandler

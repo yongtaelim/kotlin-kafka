@@ -3,9 +3,6 @@
 //import me.example.kotlinkafka.common.kafka.producer.KafkaProducer
 //import org.springframework.kafka.core.KafkaTemplate
 //import org.springframework.stereotype.Component
-//import java.util.concurrent.ExecutionException
-//import java.util.concurrent.TimeUnit
-//import java.util.concurrent.TimeoutException
 //
 ///**
 // * Created by LYT to 2021/08/17

@@ -67,4 +67,9 @@ class MemberController(
     fun saveMemberInt(
         @RequestBody member: Member
     ) = producer.sendMessageInt(member.age!!)
+
+    @PostMapping("/object")
+    fun saveMemberObject(
+        @RequestBody member: Member
+    ) = producer.sendMessageObject(member)
 }

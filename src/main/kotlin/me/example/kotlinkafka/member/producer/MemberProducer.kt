@@ -1,6 +1,7 @@
 package me.example.kotlinkafka.member.producer
 
 import me.example.kotlinkafka.common.kafka.producer.KafkaProducer
+import me.example.kotlinkafka.member.domain.dto.Member
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
 import java.util.concurrent.ExecutionException
@@ -13,7 +14,8 @@ import java.util.concurrent.TimeoutException
 @Component
 class MemberProducer(
     val kafkaTemplate: KafkaTemplate<String, String>,
-    val kafkaTemplate1: KafkaTemplate<String, Int>
+    val kafkaTemplate1: KafkaTemplate<String, Int>,
+    val memberKafkaTemplate: KafkaTemplate<String, Member>
 ): KafkaProducer() {
     companion object {
         const val TOPIC_NAME = "insert_member"
@@ -39,6 +41,10 @@ class MemberProducer(
     fun sendMessageInt(message: Int) {
         // kafka producer
         kafkaTemplate1.send(TOPIC_NAME, message)
+    }
+
+    fun sendMessageObject(member: Member) {
+        memberKafkaTemplate.send(TOPIC_NAME, member)
     }
 
     /**
