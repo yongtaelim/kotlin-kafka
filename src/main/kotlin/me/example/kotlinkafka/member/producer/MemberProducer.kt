@@ -44,7 +44,7 @@ class MemberProducer(
     }
 
     fun sendMessageObject(member: Member) {
-        memberKafkaTemplate.send(TOPIC_NAME, member)
+        memberKafkaTemplate.send(TOPIC_NAME, member.name!!, member)
     }
 
     /**
