@@ -2,6 +2,7 @@ package me.example.kotlinkafka.common.kafka.consumer.config
 
 import me.example.kotlinkafka.member.domain.dto.Member
 import org.apache.kafka.clients.consumer.ConsumerConfig
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
@@ -15,12 +16,16 @@ import org.springframework.kafka.config.KafkaListenerEndpointRegistrar
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory
 import org.springframework.kafka.core.DefaultKafkaProducerFactory
 import org.springframework.kafka.core.KafkaTemplate
-import org.springframework.kafka.listener.ConsumerAwareRebalanceListener
 import org.springframework.kafka.listener.ContainerProperties
+import org.springframework.kafka.listener.SeekToCurrentErrorHandler
+import org.springframework.kafka.listener.adapter.RetryingMessageListenerAdapter
 import org.springframework.kafka.support.serializer.JsonDeserializer
 import org.springframework.kafka.support.serializer.JsonSerializer
+import org.springframework.remoting.RemoteAccessException
+import org.springframework.retry.policy.TimeoutRetryPolicy
+import org.springframework.retry.support.RetryTemplate
+import org.springframework.util.backoff.FixedBackOff
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean
-import java.io.Serializable
 
 /**
  * Created by LYT to 2021/09/30
@@ -30,7 +35,8 @@ import java.io.Serializable
 @Configuration
 @EnableKafka
 class KafkaValidatorConfig(
-    private val validator: LocalValidatorFactoryBean
+    /** spring validation */
+    private val validator: LocalValidatorFactoryBean,
 ) : KafkaListenerConfigurer {
 
     @Value("\${spring.kafka.consumer.bootstrap-servers}")
@@ -46,14 +52,75 @@ class KafkaValidatorConfig(
             it.consumerFactory =
                 DefaultKafkaConsumerFactory(getConfig(), StringDeserializer(), JsonDeserializer(Member::class.java))
             it.containerProperties.ackMode = ContainerProperties.AckMode.MANUAL
+
+            // retry
+            it.setErrorHandler(SeekToCurrentErrorHandler(FixedBackOff(0, 3L)))
+            it.setRetryTemplate(retryTemplate())
+            it.setStatefulRetry(true)
+            it.setRecoveryCallback { context ->
+                println("retry count:: ${context.retryCount}")
+                println("attribute names:: ${context.attributeNames()}")
+                println("consumer retry:: $context")
+                val consumer = context.getAttribute(RetryingMessageListenerAdapter.CONTEXT_RECORD) as ConsumerRecord<*, *>
+                println("consumerRecord:: $consumer")
+                null
+            }
+
+            // set reply
             it.setReplyTemplate(replyTemplate())
 
-            it.containerProperties.setConsumerRebalanceListener(object : ConsumerAwareRebalanceListener {
+            // set rebalancing listener
+//            it.containerProperties.setConsumerRebalanceListener(object : ConsumerAwareRebalanceListener {
+//                override fun onPartitionsRevokedBeforeCommit(
+//                    consumer: Consumer<*, *>,
+//                    partitions: MutableCollection<TopicPartition>
+//                ) {
+//                    super.onPartitionsRevokedBeforeCommit(consumer, partitions)
+//                }
+//
+//                override fun onPartitionsRevokedAfterCommit(
+//                    consumer: Consumer<*, *>,
+//                    partitions: MutableCollection<TopicPartition>
+//                ) {
+//                    super.onPartitionsRevokedAfterCommit(consumer, partitions)
+//                }
+//
+//                override fun onPartitionsAssigned(partitions: MutableCollection<TopicPartition>) {
+//                    super.onPartitionsAssigned(partitions)
+//                }
+//            })
 
-            })
         }
     }
 
+    /**
+     * retry template
+     * @return RetryTemplate
+     */
+    private fun retryTemplate(): RetryTemplate {
+        val retryTemplate = RetryTemplate.builder()
+            .retryOn(RemoteAccessException::class.java)
+            .retryOn(RuntimeException::class.java)
+            .build()
+
+        retryTemplate.setRetryPolicy(retryTemplatePolicy())
+        return retryTemplate
+    }
+
+    /**
+     * retry template policy
+     * @return TimeoutRetryPolicy
+     */
+    private fun retryTemplatePolicy(): TimeoutRetryPolicy {
+        val timePolicy = TimeoutRetryPolicy()
+        timePolicy.timeout = 30000L
+        return timePolicy
+    }
+
+    /**
+     * reply member factory
+     * @return ConcurrentKafkaListenerContainerFactory<String, Member>
+     */
     @Bean
     fun replyMemberFactory(): ConcurrentKafkaListenerContainerFactory<String, Member> {
         return ConcurrentKafkaListenerContainerFactory<String, Member>().also {
@@ -86,7 +153,11 @@ class KafkaValidatorConfig(
         return DefaultKafkaProducerFactory<String, Member>(memberProducerConfig())
     }
 
-    private fun memberProducerConfig(): Map<String, Serializable> =
+    /**
+     * reply kafka configuration
+     * @return Map<String, Serializable>
+     */
+    private fun memberProducerConfig(): Map<String, Any> =
         mapOf(
             ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to BOOTSTRAP_SERVER,
             ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,

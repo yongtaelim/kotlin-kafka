@@ -22,7 +22,7 @@ class MemberController(
 
     @PatchMapping("/start")
     fun consumerStart() {
-        val listener1 = registry.getListenerContainer("listener1")
+        val listener1 = registry.getListenerContainer("member_validated2")
 //        val b = registry.allListenerContainers
 //        for (messageListenerContainer in b) {
 //            println("""
@@ -38,7 +38,7 @@ class MemberController(
 
     @PatchMapping("/stop")
     fun consumerStop() {
-        val listener1 = registry.getListenerContainer("listener1")
+        val listener1 = registry.getListenerContainer("member_validated2")
 //        val b = registry.allListenerContainers
 //        for (messageListenerContainer in b) {
 //            println("""
