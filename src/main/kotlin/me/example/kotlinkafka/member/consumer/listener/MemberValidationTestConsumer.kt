@@ -45,13 +45,13 @@ class MemberValidationTestConsumer {
         groupId = "m_group",
         errorHandler = "validationErrorHandler"
     )
-    @SendTo(value = ["reply_insert_member"])
+//    @SendTo(value = ["reply_insert_member"])
     fun memberListener2(@Payload @Valid member: Member, meta: ConsumerRecordMetadata, acknowledgment: Acknowledgment) {
         println("memberListener data:: $member")
         println("memberListener offset:${meta.offset()} partition:${meta.partition()}")
-        if (member.age == 10)
-            throw RuntimeException("그냥 실패해라!!!!")
-
+//        if (member.age == 10)
+//            throw RuntimeException("그냥 실패해라!!!!")
+//
         acknowledgment.acknowledge()
     }
 
