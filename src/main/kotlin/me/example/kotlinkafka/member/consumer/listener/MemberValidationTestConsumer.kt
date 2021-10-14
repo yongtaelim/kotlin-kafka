@@ -21,15 +21,31 @@ import javax.validation.Valid
 @Component
 class MemberValidationTestConsumer {
 
+    @KafkaListener(
+        id = "member_listener",
+        topics = ["insert_member"],
+        containerFactory = "memberFactory",
+        groupId = "m_group",
+        errorHandler = "validationErrorHandler"
+    )
+    @SendTo(value = ["reply_member"])
+    fun memberListener1(@Payload @Valid member: Member, meta: ConsumerRecordMetadata, acknowledgment: Acknowledgment) {
+        println("memberListener data:: $member")
+        println("memberListener offset:${meta.offset()} partition:${meta.partition()}")
+//        if (member.age == 10)
+//            throw RuntimeException("그냥 실패해라!!!!")
+
+        acknowledgment.acknowledge()
+    }
+
 //    @KafkaListener(
-//        id = "member_reply",
+//        id = "member_retry",
 //        topics = ["insert_member"],
 //        containerFactory = "memberFactory",
 //        groupId = "m_group",
 //        errorHandler = "validationErrorHandler"
 //    )
-//    @SendTo(value = ["reply_insert_member"])
-//    fun memberListener1(@Payload @Valid member: Member, meta: ConsumerRecordMetadata, acknowledgment: Acknowledgment) {
+//    fun memberListener2(@Payload @Valid member: Member, meta: ConsumerRecordMetadata, acknowledgment: Acknowledgment) {
 //        println("memberListener data:: $member")
 //        println("memberListener offset:${meta.offset()} partition:${meta.partition()}")
 //        if (member.age == 10)
@@ -38,48 +54,39 @@ class MemberValidationTestConsumer {
 //        acknowledgment.acknowledge()
 //    }
 
-    @KafkaListener(
-        id = "member_retry",
-        topics = ["insert_member"],
-        containerFactory = "memberFactory",
-        groupId = "m_group",
-        errorHandler = "validationErrorHandler"
-    )
-//    @SendTo(value = ["reply_insert_member"])
-    fun memberListener2(@Payload @Valid member: Member, meta: ConsumerRecordMetadata, acknowledgment: Acknowledgment) {
-        println("memberListener data:: $member")
-        println("memberListener offset:${meta.offset()} partition:${meta.partition()}")
-//        if (member.age == 10)
-//            throw RuntimeException("그냥 실패해라!!!!")
-//
-        acknowledgment.acknowledge()
-    }
-
     @Bean
     fun validationErrorHandler(): KafkaListenerErrorHandler {
-        return object : KafkaListenerErrorHandler {
-            override fun handleError(msg: Message<*>, exception: ListenerExecutionFailedException): Any {
-                return msg
-            }
-
-            override fun handleError(
-                msg: Message<*>,
-                exception: ListenerExecutionFailedException,
-                consumer: Consumer<*, *>
-            ): Any {
-                val member = msg.payload as Member
-                when {
-                    exception.contains(MethodArgumentNotValidException::class.java) -> {
-                        saveFailData(member, exception)
-                        consumer.commitAsync()
-                    }
-                    exception.contains(RuntimeException::class.java) -> throw RuntimeException("error Handler!!!!", exception)
-                }
-
-                return super.handleError(msg, exception, consumer)
-            }
+        return KafkaListenerErrorHandler { message, exception ->
+            println("validation error handler message=${message.payload} exception groupId=${exception.groupId} exception cause=${exception.rootCause}")
+            message
         }
     }
+
+//    @Bean
+//    fun validationErrorHandler(): KafkaListenerErrorHandler {
+//        return object : KafkaListenerErrorHandler {
+//            override fun handleError(msg: Message<*>, exception: ListenerExecutionFailedException): Any {
+//                return msg
+//            }
+//
+//            override fun handleError(
+//                msg: Message<*>,
+//                exception: ListenerExecutionFailedException,
+//                consumer: Consumer<*, *>
+//            ): Any {
+//                val member = msg.payload as Member
+//                when {
+//                    exception.contains(MethodArgumentNotValidException::class.java) -> {
+//                        saveFailData(member, exception)
+//                        consumer.commitAsync()
+//                    }
+//                    exception.contains(RuntimeException::class.java) -> throw RuntimeException("error Handler!!!!", exception)
+//                }
+//
+//                return super.handleError(msg, exception, consumer)
+//            }
+//        }
+//    }
 
     private fun saveFailData(member: Member, e: Exception) {
         // save
@@ -88,14 +95,25 @@ class MemberValidationTestConsumer {
     }
 
     @KafkaListener(
-        id = "reply_member_validated",
-        topics = ["reply_insert_member"],
+        id = "reply_member_listener",
+        topics = ["reply_member"],
         containerFactory = "replyMemberFactory",
-        groupId = "m_group"
+        groupId = "m_group",
+        errorHandler = "replyErrorHandler"
     )
     fun replyMemberListener(member: Member, meta: ConsumerRecordMetadata, acknowledgment: Acknowledgment) {
         println("replyMemberListener data:: $member")
         println("replyMemberListener offset:${meta.offset()} partition:${meta.partition()}")
+
+//        saveFailData(member)
         acknowledgment.acknowledge()
+    }
+
+    @Bean
+    fun replyErrorHandler(): KafkaListenerErrorHandler {
+        return KafkaListenerErrorHandler { message, exception ->
+            println("validation error handler message=${message.payload} exception groupId=${exception.groupId} exception cause=${exception.rootCause}")
+            message
+        }
     }
 }

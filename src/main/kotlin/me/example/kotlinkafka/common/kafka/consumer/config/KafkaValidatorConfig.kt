@@ -67,7 +67,7 @@ class KafkaValidatorConfig(
             }
 
             // set reply
-            it.setReplyTemplate(replyTemplate())
+//            it.setReplyTemplate(replyTemplate())
 
             // set rebalancing listener
 //            it.containerProperties.setConsumerRebalanceListener(object : ConsumerAwareRebalanceListener {
@@ -135,7 +135,13 @@ class KafkaValidatorConfig(
             ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to BOOTSTRAP_SERVER,
             ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "latest",    // 마지막 읽은 부분부터 Read
             ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG to false,
+
+//            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to ErrorHandlingDeserializer::class,
+//            ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS to JsonDeserializer::class.java,
+//            ErrorHandlingDeserializer.VALUE_FUNCTION to FailedProvider::class.java
         )
+
+
 
     /**
      * reply kafka template
